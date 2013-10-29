@@ -17,6 +17,8 @@ public class GeoJson {
     private static final Logger LOG = LoggerFactory.getLogger(GeoJson.class);
     private List<GeoJsonGeometry> geometryCollection = new ArrayList<>();
     private List<GeoJsonFeature>  featureCollection  = new ArrayList<>();
+    private boolean updated = false;
+    private String toStringCache = null;
 
     public GeoJson() {}
 
@@ -33,36 +35,58 @@ public class GeoJson {
     }
 
     public GeoJson addGeometry(GeoJsonGeometry geometry) {
+        if(this.featureCollection.size() > 0) {
+            LOG.error("Cannot add a geometry; a feature or featureCollection already exists");
+            return this;
+        }
         this.geometryCollection.add(geometry);
+        updated = true;
         return this;
     }
 
     public GeoJson addFeature(GeoJsonFeature feature) {
+        if(this.geometryCollection.size() > 0) {
+            LOG.error("Cannot add a feature; a geometry or geometryCollection already exists");
+            return this;
+        }
         this.featureCollection.add(feature);
+        updated = true;
         return this;
     }
 
     public GeoJson removeGeometry(GeoJsonGeometry geometry) {
-        this.geometryCollection.remove(geometry);
+        if(this.geometryCollection.remove(geometry)) {
+            updated = true;
+        }
         return this;
     }
 
     public GeoJson removeGeometry(int index) {
-        this.geometryCollection.remove(index);
+        if(this.geometryCollection.remove(index) != null) {
+            updated = true;
+        }
         return this;
     }
 
     public GeoJson removeFeature(GeoJsonFeature feature) {
-        this.featureCollection.remove(feature);
+        if(this.featureCollection.remove(feature)) {
+            updated = true;
+        }
         return this;
     }
 
     public GeoJson removeFeature(int index) {
-        this.featureCollection.remove(index);
+        if(this.featureCollection.remove(index) != null) {
+            updated = true;
+        }
         return this;
     }
 
     public GeoJson parse(byte[] source) throws IOException {
+        geometryCollection.clear();
+        featureCollection.clear();
+        updated = true;
+
         int objectDepth = -1;
         JsonParser p = JsonFactoryImpl.INSTANCE.getParser(source);
         JsonToken t = p.nextToken();
@@ -100,40 +124,48 @@ public class GeoJson {
     public String toString() {
         int featureSize = featureCollection.size();
         int geometrySize = geometryCollection.size();
-
-        if(featureSize > 0) {
-            if(featureSize == 1) {
-                return featureCollection.get(0).toString();
-            } else {
-                StringBuilder sb = new StringBuilder("{\"type\":\"FeatureCollection\",\"features\":[");
-                for(GeoJsonFeature f: featureCollection) {
-                    sb.append(f.toString());
-                    sb.append(",");
+        if(updated || this.toStringCache != null) {
+            StringBuilder sb = new StringBuilder();
+            if(featureSize > 0) {
+                if(featureSize == 1) {
+                    sb.append(featureCollection.get(0));
+                } else {
+                    sb.append("{\"type\":\"FeatureCollection\",\"features\":[");
+                    for(GeoJsonFeature f: featureCollection) {
+                        sb.append(f.toString());
+                        sb.append(",");
+                    }
+                    sb.deleteCharAt(sb.length()-1);
+                    sb.append("]}");
                 }
-                sb.deleteCharAt(sb.length()-1);
-                sb.append("]}");
-                return sb.toString();
-            }
-        } else if (geometryCollection.size() > 0) {
-            if(geometrySize == 1) {
-                return geometryCollection.get(0).toString();
-            } else {
-                StringBuilder sb = new StringBuilder("{\"type\":\"GeometryCollection\",\"geometries\":[");
-                for(GeoJsonGeometry g: geometryCollection) {
-                    sb.append(g.toString());
-                    sb.append(",");
+            } else if (geometryCollection.size() > 0) {
+                if(geometrySize == 1) {
+                    sb.append(geometryCollection.get(0));
+                } else {
+                    sb.append("{\"type\":\"GeometryCollection\",\"geometries\":[");
+                    for(GeoJsonGeometry g: geometryCollection) {
+                        sb.append(g.toString());
+                        sb.append(",");
+                    }
+                    sb.deleteCharAt(sb.length()-1);
+                    sb.append("]}");
                 }
-                sb.deleteCharAt(sb.length()-1);
-                sb.append("]}");
-                return sb.toString();
+            } else {
+                sb.append("{}");
             }
-        } else {
-            return "{}";
+            updated = false;
+            this.toStringCache = sb.toString();
         }
+        return this.toStringCache;
     }
 
     public byte[] toByteArray() throws IOException {
         return this.toString().getBytes("UTF-8");
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj.toString().equals(this.toString());
     }
 
     private GeoJsonPoint pointParser(JsonParser p) throws IOException {
@@ -228,22 +260,6 @@ public class GeoJson {
                 }
             }
             t = p.nextToken();
-        }
-    }
-
-    private void geometryCollectionParser(JsonParser p) throws IOException {
-        JsonToken t = p.nextToken();
-
-        boolean processing = false;
-
-        while (t != null) {
-            String currentName = p.getCurrentName();
-            if(t == JsonToken.FIELD_NAME && currentName.equals("geometries")) {
-                t = p.nextToken();
-                if(t != JsonToken.START_ARRAY) {
-
-                }
-            }
         }
     }
 }

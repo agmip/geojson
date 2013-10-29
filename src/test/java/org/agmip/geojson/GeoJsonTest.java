@@ -75,4 +75,25 @@ public class GeoJsonTest {
         assertEquals("Invalid coordinates found", validCoordinates, gj.getGeometries().get(1).getFirstCoordinates().toString());
         assertEquals("Non-matching GeoJson strings", gCol, gj.toString());
     }
+
+    @Test
+    public void buildFromStratch() throws IOException {
+        GeoJson gj = new GeoJson();
+        GeoJsonFeature f = new GeoJsonFeature(new GeoJsonPoint(1,1));
+        f.addProperty("something", "new");
+        gj.addFeature(new GeoJsonFeature(new GeoJsonPoint(0,0)));
+        gj.addFeature(f);
+        LOG.info("Raw GeoJson {}", gj.toString());
+    }
+
+    @Test
+    public void addDifferentFailure() throws IOException {
+        GeoJson validGj = new GeoJson();
+        GeoJson gj = new GeoJson();
+
+        validGj.addGeometry(new GeoJsonPoint(0,0));
+        gj.addGeometry(new GeoJsonPoint(0,0));
+        gj.addFeature(new GeoJsonFeature(validGj.getGeometries().get(0)));
+        assertEquals("These two are comparatively equal?", validGj, gj);
+    }
 }
