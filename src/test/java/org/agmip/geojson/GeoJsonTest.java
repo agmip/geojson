@@ -31,6 +31,7 @@ public class GeoJsonTest {
         GeoJson gj = new GeoJson(p.toByteArray());
         GeoJsonPoint point = (GeoJsonPoint)gj.getGeometries().get(0);
         assertEquals("Invalid point parsed", validPoint, point.getFirstCoordinates().toString());
+        assertEquals("Non-matching GeoJson strings", p.toString(), gj.toString());
     }
 
     @Test
@@ -41,6 +42,7 @@ public class GeoJsonTest {
         GeoJsonFeature feature = gj.getFeatures().get(0);
         assertEquals("Invalid point parsed", validPoint, feature.getGeometry().getFirstCoordinates().toString());
         assertEquals("Invalid property found", propertyValue, feature.getProperty("something"));
+        assertEquals("Non-matching GeoJson strings", f.toString(), gj.toString());
     }
 
     @Test
@@ -55,6 +57,7 @@ public class GeoJsonTest {
         GeoJson gj = new GeoJson(fCol.getBytes("UTF-8"));
         assertEquals("Not enough features in collection", 2, gj.getFeatures().size());
         assertEquals("Invalid property found", "new", gj.getFeatures().get(1).getProperty("something"));
+        assertEquals("Non-matching GeoJson strings", fCol, gj.toString());
     }
 
     @Test
@@ -70,5 +73,6 @@ public class GeoJsonTest {
         GeoJson gj = new GeoJson(gCol.getBytes("UTF-8"));
         assertEquals("Not enough geometries in the collection", 2, gj.getGeometries().size());
         assertEquals("Invalid coordinates found", validCoordinates, gj.getGeometries().get(1).getFirstCoordinates().toString());
+        assertEquals("Non-matching GeoJson strings", gCol, gj.toString());
     }
 }

@@ -32,6 +32,36 @@ public class GeoJson {
         return featureCollection;
     }
 
+    public GeoJson addGeometry(GeoJsonGeometry geometry) {
+        this.geometryCollection.add(geometry);
+        return this;
+    }
+
+    public GeoJson addFeature(GeoJsonFeature feature) {
+        this.featureCollection.add(feature);
+        return this;
+    }
+
+    public GeoJson removeGeometry(GeoJsonGeometry geometry) {
+        this.geometryCollection.remove(geometry);
+        return this;
+    }
+
+    public GeoJson removeGeometry(int index) {
+        this.geometryCollection.remove(index);
+        return this;
+    }
+
+    public GeoJson removeFeature(GeoJsonFeature feature) {
+        this.featureCollection.remove(feature);
+        return this;
+    }
+
+    public GeoJson removeFeature(int index) {
+        this.featureCollection.remove(index);
+        return this;
+    }
+
     public GeoJson parse(byte[] source) throws IOException {
         int objectDepth = -1;
         JsonParser p = JsonFactoryImpl.INSTANCE.getParser(source);
@@ -64,6 +94,46 @@ public class GeoJson {
         }
         p.close();
         return this;
+    }
+
+    @Override
+    public String toString() {
+        int featureSize = featureCollection.size();
+        int geometrySize = geometryCollection.size();
+
+        if(featureSize > 0) {
+            if(featureSize == 1) {
+                return featureCollection.get(0).toString();
+            } else {
+                StringBuilder sb = new StringBuilder("{\"type\":\"FeatureCollection\",\"features\":[");
+                for(GeoJsonFeature f: featureCollection) {
+                    sb.append(f.toString());
+                    sb.append(",");
+                }
+                sb.deleteCharAt(sb.length()-1);
+                sb.append("]}");
+                return sb.toString();
+            }
+        } else if (geometryCollection.size() > 0) {
+            if(geometrySize == 1) {
+                return geometryCollection.get(0).toString();
+            } else {
+                StringBuilder sb = new StringBuilder("{\"type\":\"GeometryCollection\",\"geometries\":[");
+                for(GeoJsonGeometry g: geometryCollection) {
+                    sb.append(g.toString());
+                    sb.append(",");
+                }
+                sb.deleteCharAt(sb.length()-1);
+                sb.append("]}");
+                return sb.toString();
+            }
+        } else {
+            return "{}";
+        }
+    }
+
+    public byte[] toByteArray() throws IOException {
+        return this.toString().getBytes("UTF-8");
     }
 
     private GeoJsonPoint pointParser(JsonParser p) throws IOException {
